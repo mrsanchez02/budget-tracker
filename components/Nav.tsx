@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const tabs = [
+const tabs: { href: '/' | '/transactions' | '/categories'; label: string }[] = [
   { href: "/", label: "Dashboard" },
   { href: "/transactions", label: "Transactions" },
   { href: "/categories", label: "Categories" },
