@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import CategoryPie from "@/components/CategoryPie";
 import MonthlyLine from "@/components/MonthlyLine";
@@ -10,17 +10,17 @@ function firstDayMonthISO(monthStr?: string) {
   // monthStr: YYYY-MM
   const d = monthStr ? new Date(monthStr + "-01") : new Date();
   d.setDate(1);
-  return d.toISOString().slice(0,10);
+  return d.toISOString().slice(0, 10);
 }
 function lastDayMonthISO(monthStr?: string) {
   const d = monthStr ? new Date(monthStr + "-01") : new Date();
-  d.setMonth(d.getMonth()+1, 0); // last day of month
-  return d.toISOString().slice(0,10);
+  d.setMonth(d.getMonth() + 1, 0); // last day of month
+  return d.toISOString().slice(0, 10);
 }
 
 export default function Dashboard() {
   const [ready, setReady] = useState(false);
-  const [userId, setUserId] = useState<string|null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [tx, setTx] = useState<Transaction[]>([]);
 
@@ -28,9 +28,9 @@ export default function Dashboard() {
   const start = firstDayMonthISO(urlMonth);
   const end = lastDayMonthISO(urlMonth);
 
-  useEffect(()=>{
+  useEffect(() => {
     (async () => {
-      const { data:{user} } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setReady(true);
         return;
@@ -59,10 +59,10 @@ export default function Dashboard() {
     const map = new Map<string, number>();
     for (const t of tx) {
       const key = t.occurred_on;
-      const val = Number(t.amount) * ( (()=>{
-        const cat = categories.find(c=>c.id===t.category_id);
+      const val = Number(t.amount) * ((() => {
+        const cat = categories.find(c => c.id === t.category_id);
         return cat?.type === "income" ? -1 : 1;
-      })() );
+      })());
       map.set(key, (map.get(key) ?? 0) + val);
     }
     const days = Array.from(map.keys()).sort();
@@ -86,45 +86,47 @@ export default function Dashboard() {
   }, [tx, categories]);
 
   return (
-    <div className="grid gap-4">
-      <div className="card" style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
-        <h1 className="text-xl font-bold">Dashboard</h1>
-        <MonthPicker />
-      </div>
-      {!ready ? (
-        <div className="card">Loading…</div>
-      ) : !userId ? (
-        <div className="card">
-          <p>You are not signed in. <a className="link" href="/login">Log in</a> to start tracking your budget.</p>
+    <Suspense>
+      <div className="grid gap-4">
+        <div className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h1 className="text-xl font-bold">Dashboard</h1>
+          <MonthPicker />
         </div>
-      ) : (
-        <>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="card">
-              <h2 className="font-semibold mb-2">Spending by Category (Pie)</h2>
-              <CategoryPie data={pieData} />
-            </div>
-            <div className="card">
-              <h2 className="font-semibold mb-2">Daily Net Flow (Line)</h2>
-              <MonthlyLine days={lineData.days} amounts={lineData.amounts} />
-            </div>
-          </div>
+        {!ready ? (
+          <div className="card">Loading…</div>
+        ) : !userId ? (
           <div className="card">
-            <h2 className="font-semibold mb-2">This Month — Totals</h2>
-            <div style={{display:"grid", gridTemplateColumns: "1fr 1fr 1fr", gap:".75rem"}}>
-              <div className="card"><div className="label">Expenses</div><div className="text-2xl">
-                { totalExpenses.toFixed(2) } DOP
-              </div></div>
-              <div className="card"><div className="label">Income</div><div className="text-2xl">
-                { totalIncome.toFixed(2) } DOP
-              </div></div>
-              <div className="card"><div className="label">Net</div><div className="text-2xl">
-                { (totalIncome - totalExpenses).toFixed(2) } DOP
-              </div></div>
-            </div>
+            <p>You are not signed in. <a className="link" href="/login">Log in</a> to start tracking your budget.</p>
           </div>
-        </>
-      )}
-    </div>
+        ) : (
+          <>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="card">
+                <h2 className="font-semibold mb-2">Spending by Category (Pie)</h2>
+                <CategoryPie data={pieData} />
+              </div>
+              <div className="card">
+                <h2 className="font-semibold mb-2">Daily Net Flow (Line)</h2>
+                <MonthlyLine days={lineData.days} amounts={lineData.amounts} />
+              </div>
+            </div>
+            <div className="card">
+              <h2 className="font-semibold mb-2">This Month — Totals</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: ".75rem" }}>
+                <div className="card"><div className="label">Expenses</div><div className="text-2xl">
+                  {totalExpenses.toFixed(2)} DOP
+                </div></div>
+                <div className="card"><div className="label">Income</div><div className="text-2xl">
+                  {totalIncome.toFixed(2)} DOP
+                </div></div>
+                <div className="card"><div className="label">Net</div><div className="text-2xl">
+                  {(totalIncome - totalExpenses).toFixed(2)} DOP
+                </div></div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </Suspense>
   );
 }
