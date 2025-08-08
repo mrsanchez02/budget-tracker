@@ -30,7 +30,7 @@ export default function AddTransactionForm() {
   }, []);
 
   const defaultValues = {
-    amount: "",
+    amount: 0,
     occurred_on: new Date().toISOString().slice(0, 10),
     category_id: "",
     note: "",
