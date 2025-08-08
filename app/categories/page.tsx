@@ -21,7 +21,12 @@ export default function CategoriesPage() {
   const onDelete = async (id:string) => {
     if (!confirm("Delete this category?")) return;
     const { error } = await supabase.from("categories").delete().eq("id", id);
-    if (error) alert(error.message); else location.reload();
+    if (error) {
+      alert(error.message);
+    } else {
+      setCats((prev) => prev.filter((c) => c.id !== id));
+      alert("Category deleted");
+    }
   };
 
   return (
