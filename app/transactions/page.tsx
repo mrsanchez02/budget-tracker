@@ -28,7 +28,12 @@ export default function TransactionsPage() {
   const onDelete = async (id:string) => {
     if (!confirm("Delete this transaction?")) return;
     const { error } = await supabase.from("transactions").delete().eq("id", id);
-    if (error) alert(error.message); else location.reload();
+    if (error) {
+      alert(error.message);
+    } else {
+      setTx((prev) => prev.filter((t) => t.id !== id));
+      alert("Transaction deleted");
+    }
   };
 
   return (
