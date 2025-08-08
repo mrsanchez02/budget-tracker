@@ -41,7 +41,7 @@ export default function AddTransactionForm() {
       note: values.note || null
     });
     if (error) alert(error.message);
-    else { reset({ amount: "", occurred_on: new Date().toISOString().slice(0,10), note:"", category_id:"" }); location.reload(); }
+    else { reset({ amount: 0, occurred_on: new Date().toISOString().slice(0,10), note:"", category_id:"" }); location.reload(); }
   };
 
   return (
