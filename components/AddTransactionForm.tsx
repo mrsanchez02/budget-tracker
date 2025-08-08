@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/lib/supabaseClient";
@@ -15,6 +16,9 @@ const schema = z.object({
 
 export default function AddTransactionForm() {
   const [cats, setCats] = useState<Category[]>([]);
+  const [message, setMessage] = useState<string | null>(null);
+  const [status, setStatus] = useState<"success" | "error" | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     (async () => {
@@ -25,27 +29,53 @@ export default function AddTransactionForm() {
     })();
   }, []);
 
-  const { register, handleSubmit, reset, formState:{errors, isSubmitting} } = useForm({
+  const defaultValues = {
+    amount: "",
+    occurred_on: new Date().toISOString().slice(0, 10),
+    category_id: "",
+    note: "",
+  };
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { occurred_on: new Date().toISOString().slice(0,10) }
+    defaultValues,
   });
 
-  const onSubmit = async (values:any) => {
+  const onSubmit = async (values: z.infer<typeof schema>) => {
     const { data: user } = await supabase.auth.getUser();
-    if (!user.user) { alert("Please log in first."); return; }
+    if (!user.user) {
+      setMessage("Please log in first.");
+      setStatus("error");
+      return;
+    }
     const { error } = await supabase.from("transactions").insert({
       user_id: user.user.id,
       amount: values.amount,
       occurred_on: values.occurred_on,
       category_id: values.category_id || null,
-      note: values.note || null
+      note: values.note || null,
     });
-    if (error) alert(error.message);
-    else { reset({ amount: 0, occurred_on: new Date().toISOString().slice(0,10), note:"", category_id:"" }); location.reload(); }
+    if (error) {
+      setMessage(error.message);
+      setStatus("error");
+    } else {
+      reset(defaultValues);
+      setMessage("Transaction added!");
+      setStatus("success");
+      router.refresh();
+    }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="card" style={{display:"grid", gap:".5rem"}}>
+      {message && (
+        <div style={{ color: status === "error" ? "#f87171" : "#4ade80" }}>{message}</div>
+      )}
       <div>
         <label className="label">Amount (DOP)</label>
         <input className="input" type="number" step="0.01" {...register("amount")} />
