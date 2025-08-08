@@ -14,7 +14,7 @@ export default function MonthPicker() {
           const m = e.target.value;
           const q = new URLSearchParams(params.toString());
           q.set("month", m);
-          router.push("/?"+q.toString());
+          router.push("/?" + q.toString() as any);
         }}
       />
     </div>
