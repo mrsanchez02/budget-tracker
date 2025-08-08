@@ -70,6 +70,21 @@ export default function Dashboard() {
     return { days, amounts };
   }, [tx, categories]);
 
+  const { totalExpenses, totalIncome } = useMemo(() => {
+    let totalExpenses = 0;
+    let totalIncome = 0;
+    for (const t of tx) {
+      const cat = categories.find(c => c.id === t.category_id);
+      const amount = Number(t.amount);
+      if (cat?.type === "income") {
+        totalIncome += amount;
+      } else if (cat?.type === "expense" || !cat) {
+        totalExpenses += amount;
+      }
+    }
+    return { totalExpenses, totalIncome };
+  }, [tx, categories]);
+
   return (
     <div className="grid gap-4">
       <div className="card" style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
@@ -98,29 +113,13 @@ export default function Dashboard() {
             <h2 className="font-semibold mb-2">This Month — Totals</h2>
             <div style={{display:"grid", gridTemplateColumns: "1fr 1fr 1fr", gap:".75rem"}}>
               <div className="card"><div className="label">Expenses</div><div className="text-2xl">
-                { (tx.filter(t=>{
-                    const cat = categories.find(c=>c.id===t.category_id);
-                    return cat?.type === "expense" || !cat;
-                  }).reduce((a,b)=>a+Number(b.amount), 0)).toFixed(2) } DOP
+                { totalExpenses.toFixed(2) } DOP
               </div></div>
               <div className="card"><div className="label">Income</div><div className="text-2xl">
-                { (tx.filter(t=>{
-                    const cat = categories.find(c=>c.id===t.category_id);
-                    return cat?.type === "income";
-                  }).reduce((a,b)=>a+Number(b.amount), 0)).toFixed(2) } DOP
+                { totalIncome.toFixed(2) } DOP
               </div></div>
               <div className="card"><div className="label">Net</div><div className="text-2xl">
-                { (()=>{
-                  const exp = tx.filter(t=>{
-                    const cat = categories.find(c=>c.id===t.category_id);
-                    return cat?.type === "expense" || !cat;
-                  }).reduce((a,b)=>a+Number(b.amount), 0);
-                  const inc = tx.filter(t=>{
-                    const cat = categories.find(c=>c.id===t.category_id);
-                    return cat?.type === "income";
-                  }).reduce((a,b)=>a+Number(b.amount), 0);
-                  return (inc - exp).toFixed(2);
-                })() } DOP
+                { (totalIncome - totalExpenses).toFixed(2) } DOP
               </div></div>
             </div>
           </div>
